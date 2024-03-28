@@ -1,0 +1,19 @@
+[project]
+name = 'rPPG'
+version = '0.0.1'
+description = 'Deep learning remote photoplethysmography training and evaluation code'
+readme = 'readme.md'
+dependencies = [
+    'torch >= 1.8.0',
+    'torchvision',
+    'numpy',
+    'opencv-python',
+    'scipy',
+    'argcomplete',
+    'progress',
+    'matplotlib',
+    'h5py',
+    'pyserial',
+    'mediapipe',
+    'pyampd'
+]

@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# These are the project-specific variables
+
+EXECUTABLE="annotator"
+
+# e.g., foo.so
+LIBRARY=
+
+# List of libs as given to pkg-config
+LIBS="libconfuse opencv4"
+
+CFLAGS="-c -Wall -fPIC -std=c++20 -Wno-deprecated-enum-enum-conversion"
+
+LDFLAGS=
+
+SOURCE_DIR="src"
+
+EXTRAS=
+
+INSTALL="
+install: \$(EXECUTABLE)
+	install -d \$(DESTDIR)\$(PREFIX)/bin/
+	install -m 755 \$(EXECUTABLE) \$(DESTDIR)\$(PREFIX)/bin/
+"
+
+# Below here shouldn't need editing
+
+SOURCES=`ls $SOURCE_DIR/*.cc | tr '\n' ' '`
+
+PKG_CONFIG_CFLAGS=
+PKG_CONFIG_LIBS=
+if [ -n "$LIBS" ]; then
+    PKG_CONFIG_CFLAGS='`pkg-config $(LIBS) --cflags`'
+    PKG_CONFIG_LIBS='`pkg-config $(LIBS) --libs`'
+fi
+
+ALL="all: \$(SOURCES)"
+
+LIBRULE=
+if [ -n "$LIBRARY" ]; then
+    LIBRULE="
+\$(LIBRARY): \$(OBJECTS)
+	\$(CC) \$(OBJECTS) -shared -o \$@ \$(LDFLAGS) $PKG_CONFIG_LIBS
+"
+    ALL="$ALL \$(LIBRARY)"
+fi
+
+EXERULE=
+if [ -n "$EXECUTABLE" ]; then
+    EXERULE="
+\$(EXECUTABLE): \$(OBJECTS)
+	\$(CC) \$(OBJECTS) -o \$@ \$(LDFLAGS) $PKG_CONFIG_LIBS
+"
+    ALL="$ALL \$(EXECUTABLE)"
+fi
+
+ORULES=$(for cc in `ls $SOURCE_DIR/*.cc`; do g++ -MM -MT `cut -d'.' -f-1 <<< $cc`.o $cc; echo -e "\t"'$(CC) $(CFLAGS) $< -o $@ '"$PKG_CONFIG_CFLAGS\n"; done)
+
+cat << EOF > Makefile
+CC=g++
+LIBS=$LIBS
+CFLAGS=$CFLAGS
+LDFLAGS=$LDFLAGS
+SOURCES=$SOURCES
+OBJECTS=\$(SOURCES:.cc=.o)
+LIBRARY=$LIBRARY
+EXECUTABLE=$EXECUTABLE
+ifeq (\$(PREFIX),)
+    PREFIX := /usr
+endif
+
+$ALL
+$EXTRAS$INSTALL$LIBRULE$EXERULE
+
+$ORULES
+
+clean:
+	rm -f $SOURCE_DIR/*.o \$(LIBRARY) \$(EXECUTABLE)
+EOF

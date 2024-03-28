@@ -1,0 +1,5 @@
+__pycache__/
+*.png
+*.avi
+*.npz
+*.egg-info

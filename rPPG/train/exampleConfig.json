@@ -1,0 +1,51 @@
+{
+    "model": {
+        "architecture": "CNN3D",
+        "tk": 5,
+        "channels": "rgb",
+        "out_channels": 1,
+        "frame_width": 64,
+        "frame_height": 64,
+        "fpc": 136,
+        "fps": 30
+    },
+    "training": {
+        "num_workers": 4,
+        "num_epochs": 40,
+        "augmentation": "figcsnm",
+        "negative_probability": 0.5,
+        "noise_width": 3.0,
+        "normalization": "histogram",
+        "dropout": 0.5,
+        "batch_size": 4,
+        "lr": 0.0001,
+        "masks": true,
+        "loss": {
+            "negpearson": 1,
+            "mae": 0,
+            "mse": 0,
+            "mcc": 0,
+            "envelope": 0,
+            "bandwidth": 0,
+            "sparsity": 0,
+            "variance": 0
+        },
+        "negativeLoss": {
+            "deviation": 1,
+            "specentropy": 0,
+            "specflatness": 0
+        }
+    },
+    "evaluation": {
+        "hr_method": "fft",
+        "hz_low": 0.66666,
+        "hz_high": 3.0,
+        "fft_window": 10.0,
+        "skip_fft": true,
+        "move_cost": 10.0,
+        "smooth_method": "none",
+        "delta_limit": 6.0,
+        "smooth": 5.0,
+        "multiprocessing": true
+    }
+}
