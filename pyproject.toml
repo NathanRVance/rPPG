@@ -16,5 +16,8 @@ dependencies = [
     'pyserial',
     'mediapipe',
     'pyampd',
-    'toch_cka'
+    'torch_cka'
 ]
+
+[tool.setuptools.package-data]
+'models' = ['*.model']
