@@ -3,7 +3,7 @@
 from pathlib import Path
 import json
 
-def train(config: dict, videos: str, output: str, gt: str = None, saveStem: str = 'rpnet', initModel: str = None, saveOptimizerState: bool = False, masks: str = None):
+def train(config: dict, videos: str, output: str, gt: str = None, saveStem: str = 'model', initModel: str = None, saveOptimizerState: bool = False, masks: str = None):
     """Train an rPPG model
 
     Arguments:

@@ -29,5 +29,5 @@ if __name__ == '__main__':
     import json
     with results.open() as f:
         bestIndex = getBestEpoch(json.load(f), optimize=args.optimizeMetric)
-    bestModel = results.parent / f'rpnet_e{bestIndex}'
+    bestModel = list(results.parent.glob('*_e{bestIndex}'))[0]
     print(bestModel)
