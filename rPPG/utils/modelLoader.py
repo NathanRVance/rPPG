@@ -73,6 +73,8 @@ def load(modelPath: str = None, configPath: str = None, config: dict = {}, archi
 
             config = cfg.Config(md.mergeDict(json.load(f), config))
     if architecture == None:
+        if config.architecture() == 'RPNetFlex':
+            config['model']['architecture'] = 'Flex'
         architecture = config.architecture()
     if architecture == 'Flex':
         from rPPG.utils.models import Flex as modelArch
