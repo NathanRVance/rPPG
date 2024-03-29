@@ -23,12 +23,14 @@ Cross-dataset results (including MSPM breakdown):
 
 ```
 Train  Eval                ME      MAE     RMSE    MXCorr
-MSPM   DDPM                -4.859  19.061  28.129  0.246i
+MSPM   DDPM                -4.859  19.061  28.129  0.246
 MSPM   PURE                1.702   2.481   4.157   0.655
 MSPM   UBFC-rPPG           -0.576  1.365   3.245   0.674
+MSPM   BP4D+               1.749   4.112   5.927   0.502
 DDPM   MSPM-all            5.280   6.985   16.352  0.498
 DDPM   MSPM-adversarial    37.776  38.189  41.087  0.120
 DDPM   MSPM-unadversarial  -0.063  1.449   3.999   0.720
 DDPM   PURE                1.666   2.060   3.682   0.663
 DDPM   UBFC-rPPG           -0.089  0.938   2.465   0.725
+DDPM   BP4D+               1.821   4.148   5.983   0.486
 ```
