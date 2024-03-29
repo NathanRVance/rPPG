@@ -117,7 +117,7 @@ if __name__ == '__main__':
     parser.add_argument('--video', default=0, help='Path to a video file to process (default uses webcam)')
     parser.add_argument('--buffer', default=5, type=float, help='Number of seconds of video buffer to process in a batch')
     from importlib.resources import files
-    parser.add_argument('--model', default=files('models').joinpath('mspm/mspm.model'), help='Deep learning model')
+    parser.add_argument('--model', default=files('models').joinpath('Flex/MSPM-6.model'), help='Deep learning model')
     parser.add_argument('--out', help='Path to write video output')
 
     args = parser.parse_args()
