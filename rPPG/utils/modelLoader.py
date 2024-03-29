@@ -107,8 +107,11 @@ if __name__ == '__main__':
 
     parser.add_argument('--model', help='Path to saved model')
     parser.add_argument('--config', help='Path to saved config')
+    parser.add_argument('--save', help='Save model (useful when migrating formats)')
 
     args = parser.parse_args()
 
     model, config = load(modelPath=args.model, configPath=args.config)
     print(model)
+    if args.save:
+        saveModelData(model.state_dict(), None, config, args.save)
