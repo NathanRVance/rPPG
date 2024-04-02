@@ -6,6 +6,7 @@ def process_POS(signals, framerate=90):
     '''
         Runs the Plane-Orthogonal-to-Skin (POS) algorithm from a spatially-averaged BGR trace.
         For more details see: Wang et al. Algorithmic Principles of Remote-PPG. 2017.
+        Source code adapted from https://github.com/pavisj/rppg-pos
 
         Arguments
             signals: [T,3] np.array where each time point is an [B,G,R] vector.

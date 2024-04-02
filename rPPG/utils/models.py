@@ -11,6 +11,7 @@ class Model(nn.Module):
         self.loss = lossObject.loss
 
 class CNN3D(Model):
+    # Adapted from https://github.com/ZitongYu/PhysNet
     def __init__(self, config, padding_mode='replicate', **kwargs):
         super(CNN3D, self).__init__(config)
         channels = len(config.channels())

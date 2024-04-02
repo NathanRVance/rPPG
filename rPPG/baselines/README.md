@@ -2,8 +2,7 @@
 # Since both CHROM and POS are lightweight and require the same inputs, we can run both at the same time.
 
 ```
-python CHROM_POS_preprocess.py <video> <landmarks> <signals>
-python CHROM_POS_process.py <signals> <framerate> <output>
+python calcBaselines.py --video path/to/video.mp4 --CHROM path/to/save/CHROM.npz --POS path/to/save/POS.npz
 ```
 
 ## References
