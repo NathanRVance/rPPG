@@ -2,35 +2,52 @@
 
 ## Configuration File
 
-The json-formatted configuration file contains the hyperparameters used both for the model architecture and training. An example configuration is given in [exampleConfig.json](exampleConfig.json).
+The json-formatted configuration file contains the hyperparameters used both for the model architecture and training. An example configuration is given in [exampleConfig.json](exampleConfig.json). The configuration is read into a [Config object](../utils/Config.py).
 
 The parameters for the model are as follows:
 
+ * architecture: Any of 'CNN3D', 'NRNet', 'NRNet\_simple', 'Flex', 'TS-CAN', 'litenetv2', 'litenetv6'
+ * depth (Flex only): The depth in layers of the model
+ * padding\_mode (Flex only): Any padding\_mode supported by [torch.nn.Conv3d](https://pytorch.org/docs/stable/generated/torch.nn.Conv3d.html)
+ * hidden\_channels (Flex only): Hidden layer channels
+ * flex\_dilation (Flex only): Perform dilation in flex models
  * tk: The temporal kernel width
- * channels: The input channels and order; any combination of r, g, b, or n.
+ * channels: The input channels and order; any combination of characters from 'n', 'rgb', 'hsv', 'yuv'
+ * out\_channels: If 1, then output is shape [B,T]. If >1, then output is shape [B,T,C].
+ * num\_waves: Used in NRNet\_simple, number of waves for noise reduction.
  * frame\_width and frame\_height: The width and height in pixels of the input cropped and scaled video.
  * fpc: The number of frames per clip as fed into the 3dcnn in each evaluation of the network.
- * step: The step length, in frames, between evaluations of the network.
  * fps: Framerate of the training data.
 
 The parameters for training are as follows:
 
  * num\_workers: The number of threads dedicated to preprocessing and feeding data.
  * num\_epochs: The number of epochs for which to train the model.
- * augmentation: Set of augmentations performed on the training data. Any combination of f, i, or g standing for flipping, illumination, and Gaussian noise.
+ * augmentation: Set of augmentations performed on the training data. Any combination of characters from 'figscsmn' standing for flipping, illumination, Gaussian noise, speed, crop, modulate, negative.
+ * negative\_probability: Used by negative augmentation as probability to generate negative sample.
+ * noise\_width: Amount of noise used by negative augmentation.
+ * normalization: Any of 'scale', 'stddev', 'histogram'
  * dropout: Dropout used in the model.
  * batch\_size: Batch size for training.
  * lr: Learning rate.
+ * masks: Whether to utilize masks if bundled with the video.
+ * loss: Dict where keys are 'negpearson', 'mae', 'mse', 'mcc', 'envelope', 'bandwidth', 'sparsity', 'variance'; and values are relative weight (floats).
+ * negativeLoss: Dict where keys are 'deviation', 'specentropy', 'specflatness'; and values are relative weight (floats).
 
 Finally, there are parameters for evalution:
 
- * hr\_method: Method for calculating heart rate from the waveform, either fft or peaks.
+ * val\_test\_fpc: Defines a fpc for validation and test sets (default: use same fpc as training). If set to 0 uses full clip.
+ * hr\_method: Method for calculating heart rate from the waveform, any of 'fft', 'peaks', 'cwt', 'sssp'
  * hz\_low: Minimum bound on heartrate, in hz.
- * hz\_high: Maximum bound on heartrate,in hz.
+ * hz\_high: Maximum bound on heartrate, in hz.
  * fft\_window: If using fft, the window size, in seconds, over which to calculate the fft.
+ * skip\_fft: Do not use fft in evaluation to calculate SNR. Sometimes necessary for large datasets.
+ * move\_cost: Used by sssp to weight cost to jump in HR.
  * smooth\_method: Method for performing smoothing, either smooth or delta\_limit.
- * smooth: If using smooth for smooth\_method, window size, in seconds, for smoothing.
  * delta\_limit: If using delta\_limit for smooth\_method, maximum change in heartrate, in bpm/second, allowed.
+ * smooth: If using smooth for smooth\_method, window size, in seconds, for smoothing.
+ * multiprocessing: Use a thread pool when evaluating.
+ * columns: List of evaluation metrics columns, default prints all.
 
 ## Splits File
 
@@ -58,17 +75,16 @@ The script can optionally be configured to take a splits file as input, or perfo
 The `test.py` script can be used to evaluate a trained model as follows:
 
 ```shell
-$ ./test.py splits.json path/to/model path/to/gt/ path/to/videos/
+$ ./test.py path/to/model path/to/gt/ path/to/videos/
 ```
 
-This outputs evaluation metrics in the following format:
-
-```
-Loss, ME, MAE, RMSE, r_HR, r_wave
-0.330, -1.082, 1.999, 4.777, 0.808, 0.562
-```
-
-In the above, Loss is the loss for the model, ME is the mean error, MAE is mean absolute error, RMSE is root mean square error, r\_HR is the Pearson r correlation between the ground truth and predicted heart rate, and r\_wave is the Pearson r correlation between the ground truth and predicted waves.
+This prints evaluation metrics in a tabular format. Common metrics include:
+ * ME: mean error
+ * MAE: mean absolute error
+ * RMSE: root mean square error
+ * r\_HR: Pearson r correlation between the ground truth and predicted heart rate
+ * r\_wave: Pearson r correlation between the ground truth and predicted waves
+ * MXCorr: Maximum cross correlation between the ground truth and predicted waves
 
 If test.py is executed with the `--save` flag, then an output directory will be generated with the following contents:
 
