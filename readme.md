@@ -19,7 +19,7 @@ The `--editable` flag may be omitted if this is a deployment installation.
 4. View and postprocess predictions. Code for this task is in [rPPG/postprocess/](rPPG/postprocess/)
 
 ## Model and run configuration
-The models have various hyperparameters used for the model architecture, training and evaluation/validation. We save these hyperparameters as a json-formatted dictionary. The complete specification is in [rPPG/train/readme.md](train/).
+The models have various hyperparameters used for the model architecture, training and evaluation/validation. We save these hyperparameters as a json-formatted dictionary. The complete specification is in [rPPG/train/readme.md](rPPG/train/).
 
 When models are trained, they are bundled with their configuration as follows:
 
