@@ -28,7 +28,7 @@ def plot(title, yVals, yLabel, xi_ctr, h_px, w_px, plotWidth, fps):
     fig = plt.figure()
     plt.rcParams.update({'font.size': 18})
     plt.title(title)
-    nones = 0 if None not in yVals else int(np.argwhere(yVals != None)[0])
+    nones = 0 if None not in yVals else int(np.argwhere(yVals != None)[0][0])
     xi_min = max(nones, int((xi_ctr/fps - plotWidth/2)*fps))
     xi_max = min(len(yVals), int((xi_ctr/fps + plotWidth/2)*fps))
     x = [i / fps for i in range(xi_min, xi_max)]
@@ -81,7 +81,7 @@ def annotateVideo(video, output, waveform=[], hrData=[], fftData=[], bboxes=[], 
             offset = ((len(wave)-len(HRs[-1]))//2)
             # HRs and fftData should be centered on the wave
             HRs = [np.append([None] * offset, HR) for HR in HRs]
-            fftData = [[None] * offset + FFT for FFT in fftData]
+            fftData = [np.append(np.full((offset, FFT.shape[1], FFT.shape[2]), None), FFT, axis=0) for FFT in fftData]
 
         for frameNum, frame in enumerate(cap):
             time = cap.time
@@ -110,7 +110,7 @@ def annotateVideo(video, output, waveform=[], hrData=[], fftData=[], bboxes=[], 
             for title, HR in getTitles('HR', HRs, hrData, hrNames):
                 plots['hr'].append(plot(title, HR, 'BPM', frameNum, plotDims, plotDims, plotWidth, cap.fps))
             for title, fft in getTitles('FFT', fftData, fftData, fftNames):
-                if frameNum < len(fft) and fft[frameNum]:
+                if frameNum < len(fft) and None not in fft[frameNum]:
                     plots['fft'].append(plotSimple(title, [n*60 for n in fft[frameNum][0]], fft[frameNum][1], 'Frequency (BPM)', 'Density', plotDims, plotDims))
             # Place them top to bottom
             imgs = [v for pv in plots.values() for v in pv]
