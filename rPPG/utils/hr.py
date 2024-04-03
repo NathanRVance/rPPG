@@ -256,7 +256,7 @@ def __calcHR(args):
     elif hrCalculator == 'cwt':
         HR, fftOrPeaks = calcHRCWT(wave, fps, lowHz, highHz)
     else:
-        HR, fftOrPeaks = calcHRFFT(wave, fps, window, lowHz, highHz, dequantize=dequantize, binWidth=binWidth, skipFFT=skipFFT)
+        HR, fftOrPeaks = calcHRFFT(wave, fps, window, lowHz, highHz, dequantize=dequantize, binWidth=binWidth, skipFFT=False if hrCalculator == 'sssp' else skipFFT)
         if hrCalculator == 'sssp':
             HR = calcHRSSSP(fftOrPeaks, fps, moveCost)
     if deltaLimit:

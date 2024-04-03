@@ -7,7 +7,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert the waveform to rate estimates', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('waveform', nargs='+', help='npz formatted waveform. If multiple are given, then output, saveFFT, and plotPeaks are prepended by index. If a directory is given, then a directory is expected for output.')
     parser.add_argument('output', help='Location to save npz formatted calculated HR')
-    parser.add_argument('--hrCalculator', help='Calculator for heart rate', choices=['fft', 'sssp', 'peaks', 'cwt'], default='fft')
+    parser.add_argument('--hrCalculator', help='Calculator for heart rate', choices=['fft', 'sssp', 'peaks-scipy', 'peaks-pyampd', 'cwt'], default='fft')
     parser.add_argument('--plotHR', help='Location to save plotted HR')
     parser.add_argument('--plotHR-ylims', help='If run with --plotHR, set the LOW and HIGH bounds, in bpm (default: automatic y range)', nargs=2, type=float, metavar=('LOW', 'HIGH'))
     parser.add_argument('--plotHR-title', help='Title on plotted HR, default="HR for {args.hrCalculator}"', default=None)

@@ -16,6 +16,7 @@ dependencies = [
     'pyserial',
     'mediapipe',
     'pyampd',
+    'ssqueezepy',
     'torch_cka'
 ]
 

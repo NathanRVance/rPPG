@@ -2,8 +2,6 @@
 
 This step ingests a .npz array containing bounding boxes and a video file, and produces a cropped video in the form of a .npz array.
 
-The crop.py script performs this step locally, and cropSubmit.sh can be used to perform this operation on the CRC.
-
 Execute crop.py as follows:
 
 ```shell
