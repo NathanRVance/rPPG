@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--start', type=float, default=0, help='Start time (s)')
     parser.add_argument('--end', type=float, default=10, help='End time (s)')
     parser.add_argument('--layerTypes', nargs='+', help='Layer types to compare, e.g., "Conv3d", "BatchNorm3d", etc. Default compares all.', default=None)
+    parser.add_argument('--cmap', default='gray', help='Colormap to use when plotting')
 
     args = parser.parse_args()
 
@@ -63,7 +64,7 @@ if __name__ == '__main__':
         grid = []
         for layerOut in [l[i] for l in layerOuts]:
             fig = plt.figure()
-            plt.imshow(layerOut, vmin=0, vmax=255)
+            plt.imshow(layerOut, vmin=0, vmax=255, cmap=args.cmap)
             plt.tight_layout()
             fig.canvas.draw()
             img = cv2.cvtColor(np.asarray(fig.canvas.buffer_rgba()), cv2.COLOR_RGBA2BGR)

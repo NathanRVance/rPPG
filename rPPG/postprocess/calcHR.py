@@ -59,7 +59,7 @@ if __name__ == '__main__':
             xMax = int(args.plotPeaksBounds[1] * fps) if args.plotPeaksBounds else len(wave)
             plt.plot([x / fps for x in range(xMin, xMax)], wave[xMin:xMax])
             peaksBelow = np.array([p for p in peaks if p <= xMax and p >= xMin])
-            plt.plot([p / fps for p in peaksBelow], wave[peaksBelow], 'x')
+            plt.plot([p / fps for p in peaksBelow], wave[peaksBelow], 'x', markersize=10, markeredgewidth=5)
             plt.xlabel('Time (s)')
             plt.ylabel('Waveform')
             plt.savefig(args.plotPeaks if len(args.waveform) == 1 else str(waveNum) + args.plotPeaks)
