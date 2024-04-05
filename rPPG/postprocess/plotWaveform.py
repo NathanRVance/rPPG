@@ -18,6 +18,7 @@ parser.add_argument('--xlabel', help='X label for the plot', default='Time (s)')
 parser.add_argument('--legendIndex', type=int, help='Position in wave path used for the legend. Default is filename stem. Reverse-indexing supported via negative values.')
 parser.add_argument('--legendOverride', nargs='+', help='Override labels by explicitely setting values')
 parser.add_argument('--legendOutside', action='store_true', help='Position the legend outside of the plot')
+parser.add_argument('--legendLocation', help='Override legend location string')
 parser.add_argument('--fontFamilyOverride', help='Override the font family with, e.g., "serif"')
 parser.add_argument('--figsize', type=float, nargs=2, default=[6.4, 4.8], help='Plot dimensions')
 
@@ -73,7 +74,10 @@ if len(args.waveform) > 1:
     if args.legendOutside:
         plt.legend(bbox_to_anchor=(1,1), loc='upper left')
     else:
-        plt.legend()
+        if args.legendLocation:
+            plt.legend(loc=args.legendLocation)
+        else:
+            plt.legend()
 plt.tight_layout()
 plt.savefig(args.output)
 plt.show()

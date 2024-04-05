@@ -50,7 +50,7 @@ if __name__ == '__main__':
     for waveNum, (path, (HR, fftOrPeaks)) in enumerate(hrs.items()):
         wave = waves[path]
         fps = args.fps if args.fps else meta[path].fps()
-        if args.hrCalculator == 'peaks' and args.plotPeaks:
+        if args.hrCalculator.startswith('peaks') and args.plotPeaks:
             peaks = fftOrPeaks
             import matplotlib.pyplot as plt
             plt.figure()
