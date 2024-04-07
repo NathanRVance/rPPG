@@ -34,4 +34,4 @@ When models are loaded, any manually provided configuration overrides the values
 
 ## Licenses
 
-Most of the code in this repository is under the MIT license. The file rPPG/utils/TSCAN.py, which is adapted from the [rPPG-Toolbox](https://github.com/ubicomplab/rPPG-Toolbox), is under the Responsible Artificial Intelligence Source Code License contained in the file LICENSE-rPPG-Toolbox.
+Most of the code in this repository is under the MIT license. The files rPPG/utils/TSCAN.py and rPPG/utils/PhysFormer.py, which are adapted from the [rPPG-Toolbox](https://github.com/ubicomplab/rPPG-Toolbox), are under the Responsible Artificial Intelligence Source Code License contained in the file LICENSE-rPPG-Toolbox.

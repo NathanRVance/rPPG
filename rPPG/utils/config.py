@@ -10,7 +10,7 @@ class Config(dict):
     ##### model #####
 
     def architecture(self) -> str:
-        # Supported: 'CNN3D', 'NRNet', 'NRNet_simple', 'Flex', 'TS-CAN', 'litenetv2', 'litenetv6'
+        # Supported: 'CNN3D', 'NRNet', 'NRNet_simple', 'Flex', 'TS-CAN', 'PhysFormer', 'litenetv2', 'litenetv6'
         return self['model'].get('architecture', 'CNN3D')
 
     def depth(self) -> int:

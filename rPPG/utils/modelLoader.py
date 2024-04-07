@@ -88,6 +88,8 @@ def load(modelPath: str = None, configPath: str = None, config: dict = {}, archi
         from rPPG.utils.litemodels import LiteNet_v6 as modelArch
     elif architecture == 'TS-CAN':
         from rPPG.utils.TSCAN import TSCAN as modelArch
+    elif architecture == 'PhysFormer':
+        from rPPG.utils.PhysFormer import PhysFormer as modelArch
     else:
         raise ValueError(f'Unknown model architecture {architecture}')
     if not config:
