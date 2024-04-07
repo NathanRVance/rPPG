@@ -216,8 +216,8 @@ class PhysFormer(models.Model):
         self.dim=dim
         patches=(16,)*3
         ff_dim=3072
-        num_heads=12
-        num_layers=12
+        num_heads=config.depth()
+        num_layers=config.depth()
         dropout_rate=0.2
         theta=0.2
 
