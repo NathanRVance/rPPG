@@ -31,3 +31,7 @@ When models are trained, they are bundled with their configuration as follows:
 ```
 
 When models are loaded, any manually provided configuration overrides the values bundled with the model.
+
+## Licenses
+
+Most of the code in this repository is under the MIT license. The file rPPG/utils/TSCAN.py, which is adapted from the [rPPG-Toolbox](https://github.com/ubicomplab/rPPG-Toolbox), is under the Responsible Artificial Intelligence Source Code License contained in the file LICENSE-rPPG-Toolbox.
