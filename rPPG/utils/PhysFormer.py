@@ -90,7 +90,8 @@ class MultiHeadedSelfAttention_TDC_gra_sharp(nn.Module):
         self.n_heads = num_heads
         self.scores = None # for visualization
 
-    def forward(self, x, gra_sharp):    # [B, 4*4*40, 128]
+    def forward(self, x):    # [B, 4*4*40, 128]
+        gra_sharp=2.0
         """
         x, q(query), k(key), v(value) : (B(batch_size), S(seq_len), D(dim))
         mask : (B(batch_size) x S(seq_len))
@@ -163,8 +164,9 @@ class Block_ST_TDC_gra_sharp(nn.Module):
         self.norm2 = nn.LayerNorm(dim, eps=1e-6)
         self.drop = nn.Dropout(dropout)
 
-    def forward(self, x, gra_sharp):
-        Atten, Score = self.attn(self.norm1(x), gra_sharp)
+    def forward(self, x):
+        gra_sharp=2.0
+        Atten, Score = self.attn(self.norm1(x))#, gra_sharp)
         h = self.drop(self.proj(Atten))
         x = x + h
         h = self.drop(self.pwff(self.norm2(x)))
@@ -178,67 +180,51 @@ class Transformer_ST_TDC_gra_sharp(nn.Module):
         self.blocks = nn.ModuleList([
             Block_ST_TDC_gra_sharp(dim, num_heads, ff_dim, dropout, theta) for _ in range(num_layers)])
 
-    def forward(self, x, gra_sharp):
+    def forward(self, x):
+        gra_sharp=2.0
         for block in self.blocks:
-            x, Score = block(x, gra_sharp)
-        return x, Score
+            x, Score = block(x)#, gra_sharp)
+        return x #, Score
 
 # stem_3DCNN + ST-ViT with local Depthwise Spatio-Temporal MLP
 from rPPG.utils import models
 class PhysFormer(models.Model):
-
-    #def __init__(
-    #    self, 
-    #    name: Optional[str] = None, 
-    #    pretrained: bool = False, 
-    #    patches: int = 16,
-    #    dim: int = 768,
-    #    ff_dim: int = 3072,
-    #    num_heads: int = 12,
-    #    num_layers: int = 12,
-    #    attention_dropout_rate: float = 0.0,
-    #    dropout_rate: float = 0.2,
-    #    representation_size: Optional[int] = None,
-    #    load_repr_layer: bool = False,
-    #    classifier: str = 'token',
-    #    #positional_embedding: str = '1d',
-    #    in_channels: int = 3, 
-    #    frame: int = 160,
-    #    theta: float = 0.2,
-    #    image_size: Optional[int] = None,
-    #):
-    #    super().__init__()
     def __init__(self, config, **kwargs):
         super(PhysFormer, self).__init__(config)
 
         image_size = (config.fpc(), config.frame_height(), config.frame_width())
-        dim = 768
+        patches=(4,2,2)
+        #reduced = [image_size[0]] + [s//2//2//2 for s in image_size[1:]]
+        #patched = [r//p for r, p in zip(reduced, patches)]
+        #print(f'patched size: {patched}')
+        
+
+        dim = 64
         self.dim=dim
-        patches=(16,)*3
-        ff_dim=3072
-        num_heads=config.depth()
-        num_layers=config.depth()
+        ff_dim=144
+        num_heads=4
+        num_layers=12
         dropout_rate=0.2
-        theta=0.2
+        theta=0.7
 
         # Image and patch sizes
         t, h, w = as_tuple(image_size)  # tube sizes
         ft, fh, fw = as_tuple(patches)  # patch sizes, ft = 4 ==> 160/4=40
-        gt, gh, gw = t//ft, h // fh, w // fw  # number of patches
-        seq_len = gh * gw * gt
 
         # Patch embedding    [4x16x16]conv
         self.patch_embedding = nn.Conv3d(dim, dim, kernel_size=(ft, fh, fw), stride=(ft, fh, fw))
         
+
+        self.transformers = nn.Sequential(*[Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, ff_dim=ff_dim, dropout=dropout_rate, theta=theta) for _ in range(config.depth())])
         # Transformer
-        self.transformer1 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
-                                       ff_dim=ff_dim, dropout=dropout_rate, theta=theta)
+        #self.transformer1 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
+        #                               ff_dim=ff_dim, dropout=dropout_rate, theta=theta)
         # Transformer
-        self.transformer2 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
-                                       ff_dim=ff_dim, dropout=dropout_rate, theta=theta)
+        #self.transformer2 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
+        #                               ff_dim=ff_dim, dropout=dropout_rate, theta=theta)
         # Transformer
-        self.transformer3 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
-                                       ff_dim=ff_dim, dropout=dropout_rate, theta=theta)
+        #self.transformer3 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
+        #                               ff_dim=ff_dim, dropout=dropout_rate, theta=theta)
         
         
         
@@ -291,7 +277,8 @@ class PhysFormer(models.Model):
         self.apply(_init)
 
 
-    def forward(self, x, gra_sharp):
+    def forward(self, x): #, gra_sharp):
+        gra_sharp=2.0
 
         # b is batch number, c channels, t frame, fh frame height, and fw frame width
         b, c, t, fh, fw = x.shape
@@ -299,18 +286,22 @@ class PhysFormer(models.Model):
         x = self.Stem0(x)
         x = self.Stem1(x)
         x = self.Stem2(x)  # [B, 64, 160, 64, 64]
+
+        #print(f'\nafter stem: {x.shape}')
         
         x = self.patch_embedding(x)  # [B, 64, 40, 4, 4]
+        #print(f'after patch: {x.shape}')
         x = x.flatten(2).transpose(1, 2)  # [B, 40*4*4, 64]
+        #print(f'after transpose: {x.shape}')
         
-        
-        Trans_features, Score1 =  self.transformer1(x, gra_sharp)  # [B, 4*4*40, 64]
-        Trans_features2, Score2 =  self.transformer2(Trans_features, gra_sharp)  # [B, 4*4*40, 64]
-        Trans_features3, Score3 =  self.transformer3(Trans_features2, gra_sharp)  # [B, 4*4*40, 64]
+        Trans_features = self.transformers(x)
+        #Trans_features, Score1 =  self.transformer1(x, gra_sharp)  # [B, 4*4*40, 64]
+        #Trans_features2, Score2 =  self.transformer2(Trans_features, gra_sharp)  # [B, 4*4*40, 64]
+        #Trans_features3, Score3 =  self.transformer3(Trans_features2, gra_sharp)  # [B, 4*4*40, 64]
         
         # upsampling heads
         #features_last = Trans_features3.transpose(1, 2).view(b, self.dim, 40, 4, 4) # [B, 64, 40, 4, 4]
-        features_last = Trans_features3.transpose(1, 2).view(b, self.dim, t//4, 4, 4) # [B, 64, 40, 4, 4]
+        features_last = Trans_features.transpose(1, 2).view(b, self.dim, t//4, 4, 4) # [B, 64, 40, 4, 4]
         
         features_last = self.upsample(features_last)		    # x [B, 64, 7*7, 80]
         features_last = self.upsample2(features_last)		    # x [B, 32, 7*7, 160]
