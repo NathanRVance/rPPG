@@ -53,33 +53,35 @@ def applyBandpass(freqs, psd, hz_low, hz_high, invert=False) -> (np.ndarray, np.
     hz_low, hz_high = (toArry(hz) for hz in (hz_low, hz_high))
     freqsExp = freqs[None,:].expand(psd.shape[0], -1)
     if invert:
-        freq_idcs = torch.logical_or(freqsExp >= hz_low[:,None], freqsExp <= hz_high[:,None])
+        freq_idcs = torch.logical_and(freqsExp >= hz_low[:,None], freqsExp <= hz_high[:,None])
     else:
         freq_idcs = torch.logical_or(freqsExp < hz_low[:,None], freqsExp > hz_high[:,None])
+    #import cursor
+    #cursor.show()
+    #breakpoint()
     psd[freq_idcs] = 0
     return psd
 
-def torch_power_spectral_density(x, nfft=5400, fps=90, hz_low=None, hz_high=None):
+def torch_power_spectral_density(x, nfft=5400, fps=90, hz_low=None, hz_high=None, bandpass=True, normalize=True):
     centered = x - torch.mean(x, keepdim=True, dim=1)
     psd = torch.abs(torch.fft.rfft(centered, n=nfft, dim=1))**2
     N = psd.shape[1]
-    freqs = torch.fft.rfftfreq(2*N-1, 1/fps).to(psd.get_device())
-    psd = applyBandpass(freqs, psd, hz_low, hz_high)
-    psd = psd / torch.sum(psd, keepdim=True, dim=1) ## treat as probabilities
+    freqs = torch.fft.rfftfreq(2*N-1, 1/fps, device=psd.get_device())
+    if bandpass:
+        psd = applyBandpass(freqs, psd, hz_low, hz_high)
+    if normalize:
+        psd = psd / torch.sum(psd, keepdim=True, dim=1) ## treat as probabilities
     return freqs, psd
 
 def ipr_ssl(x, nfft=5400, fps=90, hz_low=None, hz_high=None):
     # bandwidth loss
-    freqs, psd = torch_power_spectral_density(x, nfft, fps, 0, float('inf'))
-    #import cursor
-    #cursor.show()
-    #breakpoint()
+    freqs, psd = torch_power_spectral_density(x, nfft, fps, 0, float('inf'), bandpass=False, normalize=False)
     use_energy, zero_energy = (torch.sum(applyBandpass(freqs, psd, hz_low, hz_high, invert=invert), dim=1) for invert in (False, True))
     return zero_energy / (use_energy + zero_energy + EPSILON)
 
 def emd_ssl(x, nfft=5400, fps=90, hz_low=None, hz_high=None):
     # variance loss
-    freqs, psd = torch_power_spectral_density(x, nfft, fps, hz_low, hz_high)
+    freqs, psd = torch_power_spectral_density(x, nfft, fps, hz_low, hz_high, bandpass=True, normalize=True)
     B,T = psd.shape
     psd = torch.sum(psd, dim=0) / B
     expected = ((1/T)*torch.ones(T)).to(x.get_device()) #uniform distribution
@@ -87,7 +89,7 @@ def emd_ssl(x, nfft=5400, fps=90, hz_low=None, hz_high=None):
 
 def snr_ssl(x, nfft=5400, fps=90, hz_low=None, hz_high=None, hz_delta=0.1):
     # sparsity loss
-    freqs, psd = torch_power_spectral_density(x, nfft, fps, hz_low, hz_high)
+    freqs, psd = torch_power_spectral_density(x, nfft, fps, hz_low, hz_high, bandpass=True, normalize=False)
     signal_freq_idx = torch.argmax(psd, dim=1)
     signal_freq = freqs[signal_freq_idx].view(-1,1)
     freqs = freqs.repeat(psd.shape[0],1)
