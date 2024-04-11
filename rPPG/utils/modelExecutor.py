@@ -55,10 +55,10 @@ def execModel(model, loader, optimizer=None, train: bool = False, barLabel: str 
                     loss.backward()
                     optimizer.step()
             if not train:
-                subID = extras['subID'][0]
-                if subID not in predictions:
-                    predictions[subID] = []
-                predictions[subID].append(deepcopy(outputs.cpu().numpy()))
+                for subID, output in list(zip(extras['subID'], deepcopy(outputs.cpu().numpy())))[::loader.dataset.config.clip_batch_duplicate()]:
+                    if subID not in predictions:
+                        predictions[subID] = []
+                    predictions[subID].append(output)
             del outputs
         bar.next()
     bar.finish()

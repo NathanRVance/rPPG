@@ -56,9 +56,6 @@ def applyBandpass(freqs, psd, hz_low, hz_high, invert=False) -> (np.ndarray, np.
         freq_idcs = torch.logical_and(freqsExp >= hz_low[:,None], freqsExp <= hz_high[:,None])
     else:
         freq_idcs = torch.logical_or(freqsExp < hz_low[:,None], freqsExp > hz_high[:,None])
-    #import cursor
-    #cursor.show()
-    #breakpoint()
     psd[freq_idcs] = 0
     return psd
 
@@ -97,6 +94,37 @@ def snr_ssl(x, nfft=5400, fps=90, hz_low=None, hz_high=None, hz_delta=0.1):
     signal_band = torch.sum(psd * band_idcs, dim=1)
     noise_band = torch.sum(psd * torch.logical_not(band_idcs), dim=1)
     return noise_band / (signal_band + noise_band + EPSILON)
+
+def unifySpeeds(x, speeds):
+    if speeds[0] < speeds[1]:
+        x[[0,1],:] = x[[1,0],:]
+        speeds[[0,1]] = speeds[[1,0]]
+    # index 0 is faster than 1, so slow down 0 to match 1.
+    newLength = int(torch.round((speeds[0]/speeds[1]) * x.shape[1]))
+    x0 = x[0][np.newaxis,np.newaxis,:]
+    x0 = torch.nn.functional.interpolate(x0, newLength, mode='linear', align_corners=False).squeeze()
+    # Extract the center x.shape[1]
+    start = x0.shape[0]//2 - x.shape[1]//2
+    x[0] = x0[start:start+x.shape[1]]
+    return x
+
+def comparative(x, clip_batch_duplicate=2, speed=None, fps=90, hz_low=None, hz_high=None):
+    loss = torch.zeros((x.shape[0]), device=x.get_device())
+    for b in range(x.shape[0]//clip_batch_duplicate):
+        bOffset = b*clip_batch_duplicate
+        ijLoss = torch.zeros((clip_batch_duplicate, clip_batch_duplicate), device=x.get_device())
+        for i in range(clip_batch_duplicate-1):
+            for j in range(i+1, clip_batch_duplicate):
+                ij = unifySpeeds(x[[bOffset+i, bOffset+j],:], speed[[bOffset+i, bOffset+j]])
+                #import cursor
+                #cursor.show()
+                #breakpoint()
+                ijLoss[i,j] = negpearson(ij[np.newaxis,0], ij[np.newaxis,1])
+                #ijLoss[i,j] = MCC(ij[np.newaxis,0], ij[np.newaxis,1], fps=fps, hz_low=hz_low, hz_high=hz_high)
+                ijLoss[j,i] = ijLoss[i,j]
+        for i in range(clip_batch_duplicate):
+            loss[b+i] = torch.mean(ijLoss[i])
+    return loss
 
 def MCC(preds, labels, fps: float = 90, hz_low: float = None, hz_high: float = None):
     # Negative Max Cross Corr
@@ -229,6 +257,9 @@ class Loss():
                     func = emd_ssl
                 elif lossName == 'deviation':
                     func = torch_std
+                elif lossName == 'comparative':
+                    func = comparative
+                    assert 's' in self.config.augmentation() and 'm' not in self.config.augmentation() and self.config.clip_batch_duplicate() > 1
                 elif lossName == 'specentropy':
                     func = torch_spectral_entropy
                 elif lossName == 'specflatness':
@@ -239,12 +270,19 @@ class Loss():
                 if lossName != 'envelope' and len(pred.shape) == 3:
                     predAdjusted = pred[:,:,0]
                 keywords = [p.name for p in inspect.signature(func).parameters.values()]
-                passOn.update({key: value for key, value in [('fps', self.config.fps()), ('hz_low', self.config.hz_low()), ('hz_high', self.config.hz_high())] if key in keywords})
+                passOn.update({key: value for key, value in [
+                    ('fps', self.config.fps()),
+                    ('hz_low', self.config.hz_low()),
+                    ('hz_high', self.config.hz_high()),
+                    ('clip_batch_duplicate', self.config.clip_batch_duplicate())
+                    ] if key in keywords})
                 for key in passOn.keys() & ['hz_low', 'hz_high']:
                     if 'speed' in extras: # Adjust freq bounds based on augmented speed
                         passOn[key] = extras['speed'] * passOn[key]
                     else: # Adjust dimensionality
                         passOn[key] = torch.ones(pred.shape[0]) * passOn[key]
+                if 'speed' in keywords:
+                    passOn['speed'] = extras['speed']
 
                 func = functools.partial(func, **passOn)
                 spec = inspect.getfullargspec(func)

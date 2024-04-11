@@ -186,7 +186,7 @@ class Dataset(VisionDataset):
     def __len__(self):
         if self.lenOverride:
             return self.lenOverride
-        return sum(len(chunk) for chunk in self.chunks.values())
+        return sum(len(chunk) for chunk in self.chunks.values()) * self.config.clip_batch_duplicate()
 
     def __getitem__(self, index) -> (np.ndarray, np.ndarray, str):
         """In addition to selecting the appropriate {fpc}-length clip from the
@@ -200,18 +200,23 @@ class Dataset(VisionDataset):
         # Determine which subID
         for subID in sorted(self.chunks.keys()):
             chunks = self.chunks[subID]
-            thisLen = len(chunks)
+            thisLen = len(chunks) * self.config.clip_batch_duplicate()
             if thisLen <= index:
                 index -= thisLen
                 continue
             # This is the one
-            start, end = chunks[index]
+            start, end = chunks[index//self.config.clip_batch_duplicate()]
+            configToPass = self.config
+            if index % self.config.clip_batch_duplicate() != 0 and 's' not in configToPass.augmentation():
+                from rPPG.utils.config import Config
+                configToPass = Config(configToPass)
+                configToPass['training']['augmentation'] += 's'
             clip, extras = augmentations.applyAugmentations(
                     self.videos[subID],
                     None if not self.waves else self.waves[subID],
                     None if not self.HRs else self.HRs[subID],
                     (start, end),
-                    self.config)
+                    configToPass)
             clip = torch.from_numpy(clip).float()
             if 'wave' in extras:
                 extras['wave'] = torch.from_numpy(extras['wave']).float()
@@ -238,14 +243,14 @@ class Dataset(VisionDataset):
         """
         from copy import deepcopy
         # Initialize the data loader
+        shuffle=train and self.config.shuffle()
+        loader = torch.utils.data.DataLoader(self, batch_size=self.config.batch_size(), shuffle=shuffle, num_workers=self.config.num_workers())
+        #loader = torch.utils.data.DataLoader(self, batch_size=1, shuffle=False, num_workers=1) # test/val loader
         optimizer = None
         if train:
-            loader = torch.utils.data.DataLoader(self, batch_size=self.config.batch_size(), shuffle=True, num_workers=self.config.num_workers())
             optimizer = torch.optim.AdamW(model.parameters(), lr=self.config.lr())
             if model.optimizer_state_dict is not None:
                 optimizer.load_state_dict(model.optimizer_state_dict)
-        else:
-            loader = torch.utils.data.DataLoader(self, batch_size=1, shuffle=False, num_workers=1)
         predictions, loss, lossParts = modelExecutor.execModel(model, loader, optimizer=optimizer, train=train, barLabel=barLabel)
         # Postprocess
         predWavesOnly = {} # Differs from predictions if out_channels > 1

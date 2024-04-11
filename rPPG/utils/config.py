@@ -64,7 +64,8 @@ class Config(dict):
     ##### training #####
 
     def num_workers(self) -> int:
-        return self['training'].get('num_workers', 4)
+        import multiprocessing
+        return self['training'].get('num_workers', multiprocessing.cpu_count())
     
     def num_epochs(self) -> int:
         return self['training'].get('num_epochs', 40)
@@ -95,9 +96,20 @@ class Config(dict):
     def masks(self) -> bool:
         return self['training'].get('masks', True)
 
+    def clip_batch_duplicate(self) -> int:
+        # If > 1, duplicate clips within batch (necessary for comparative loss)
+        dup=self['training'].get('clip_batch_duplicate', 1)
+        assert self.batch_size() % dup == 0
+        return dup
+
+    def shuffle(self) -> bool:
+        shuffle=self['training'].get('shuffle', True)
+        assert not (shuffle and 'comparative' in self.loss() and self.loss()['comparative'] != 0)
+        return shuffle
+
     def loss(self) -> dict:
         # Supported: Dict where keys are:
-        #   'negpearson', 'mae', 'mse', 'mcc', 'envelope', 'bandwidth', 'sparsity', 'variance';
+        #   'negpearson', 'mae', 'mse', 'mcc', 'envelope', 'bandwidth', 'sparsity', 'variance', 'comparative';
         # and values are relative weight (floats)
         # Also accepts keys from negativeLoss, but who would want to do that?
         return self['training'].get('loss', {'negpearson': 1})
