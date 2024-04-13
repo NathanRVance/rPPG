@@ -202,7 +202,6 @@ class PhysFormer(models.Model):
         dim = 64
         self.dim=dim
         ff_dim=144
-        num_heads=4
         num_layers=12
         dropout_rate=0.2
         theta=0.7
@@ -215,7 +214,7 @@ class PhysFormer(models.Model):
         self.patch_embedding = nn.Conv3d(dim, dim, kernel_size=(ft, fh, fw), stride=(ft, fh, fw))
         
 
-        self.transformers = nn.Sequential(*[Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, ff_dim=ff_dim, dropout=dropout_rate, theta=theta) for _ in range(config.depth())])
+        self.transformers = nn.Sequential(*[Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=self.config.heads(), ff_dim=ff_dim, dropout=dropout_rate, theta=theta) for _ in range(config.depth())])
         # Transformer
         #self.transformer1 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
         #                               ff_dim=ff_dim, dropout=dropout_rate, theta=theta)

@@ -14,8 +14,12 @@ class Config(dict):
         return self['model'].get('architecture', 'CNN3D')
 
     def depth(self) -> int:
-        # Supported for Flex and TS-CAN models
+        # Supported for Flex, TS-CAN, and PhysFormer models
         return self['model'].get('depth', 10)
+
+    def heads(self) -> int:
+        # Supported for PhysFormer
+        return self['model'].get('heads', 4)
 
     def padding_mode(self) -> str:
         # Supports any padding_mode supported by torch.nn.Conv3d
