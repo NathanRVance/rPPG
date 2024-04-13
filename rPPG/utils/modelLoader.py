@@ -74,7 +74,7 @@ def load(modelPath: str = None, configPath: str = None, config: dict = {}, archi
             config = cfg.Config(md.mergeDict(json.load(f), config))
     if architecture == None:
         architecture = config.architecture()
-    if architecture == 'Flex':
+    if architecture == 'Flex' or architecture == 'RPNetFlex':
         from rPPG.utils.models import Flex as modelArch
     elif architecture == 'CNN3D':
         from rPPG.utils.models import CNN3D as modelArch
