@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('cka', nargs='+', help='.npy formatted CKA results')
     parser.add_argument('out', help='Path to save plotted output')
     parser.add_argument('--maxPlotsRow', type=int, default=4, help='Maximum number of plots to place in a row')
-    parser.add_argument('--title', default='CKA results', help='Title for the plot')
+    parser.add_argument('--title', help='Title for the plot')
     parser.add_argument('--subtitles', nargs='+', help='Titles for subplots, by default uses file stems')
     parser.add_argument('--ylabel', help='Override y label (otherwise uses model1 name)')
     parser.add_argument('--xlabel', help='Override x label (otherwise uses model2 name)')
@@ -18,6 +18,8 @@ if __name__ == '__main__':
     parser.add_argument('--transposeIndices', nargs='*', default=[], type=int, help='Indices of CKA results to transpose')
     parser.add_argument('--cmap', default='gray', help='Colormap to use when plotting')
     parser.add_argument('--fontsize', type=float, help='Font size when plotting')
+    parser.add_argument('--labelsize', type=float, help='Label size when plotting')
+    parser.add_argument('--modDimRatio', type=float, default=1, help='Multiplier to the fig width')
 
     args = parser.parse_args()
 
@@ -33,9 +35,12 @@ if __name__ == '__main__':
     rows = int(np.ceil(len(results)/cols))
     figwidth = 7 * (cols+1) / rows
     figheight = figwidth * rows / (cols+1)
+    figwidth *= args.modDimRatio
     if args.fontsize:
         plt.rcParams.update({'font.size': args.fontsize})
-    fig, axs = plt.subplots(nrows=rows, ncols=cols, layout='compressed', figsize=(figwidth, figheight))
+    if args.labelsize:
+        plt.rcParams.update({'axes.labelsize': args.labelsize})
+    fig, axs = plt.subplots(nrows=rows, ncols=cols, layout='constrained', figsize=(figwidth, figheight))
     fig.suptitle(args.title)
     
     # Figure out subtitles
