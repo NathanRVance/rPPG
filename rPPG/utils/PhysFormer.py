@@ -17,9 +17,6 @@ from torch import Tensor
 from torch.nn import functional as F
 import math
 
-def as_tuple(x):
-    return x if isinstance(x, tuple) else (x, x)
-
 '''
 Temporal Center-difference based Convolutional layer (3D version)
 theta: control the percentage of original convolution and centeral-difference convolution
@@ -193,13 +190,17 @@ class PhysFormer(models.Model):
         super(PhysFormer, self).__init__(config)
 
         image_size = (config.fpc(), config.frame_height(), config.frame_width())
-        patches=(4,2,2)
+        patches=(4,2*config.frame_height()//64,2*config.frame_width()//64)
         #reduced = [image_size[0]] + [s//2//2//2 for s in image_size[1:]]
         #patched = [r//p for r, p in zip(reduced, patches)]
         #print(f'patched size: {patched}')
         
 
-        dim = 64
+        dim = 96
+        if dim % self.config.heads() != 0:
+            newDim = dim + self.config.heads() - dim % self.config.heads()
+            print(f'WARN: Increasing dim from {dim} to {newDim} to accomodate heads={self.config.heads()}')
+            dim = newDim
         self.dim=dim
         ff_dim=144
         num_layers=12
@@ -207,14 +208,14 @@ class PhysFormer(models.Model):
         theta=0.7
 
         # Image and patch sizes
-        t, h, w = as_tuple(image_size)  # tube sizes
-        ft, fh, fw = as_tuple(patches)  # patch sizes, ft = 4 ==> 160/4=40
+        t, h, w = image_size  # tube sizes
+        ft, fh, fw = patches  # patch sizes, ft = 4 ==> 160/4=40
 
         # Patch embedding    [4x16x16]conv
         self.patch_embedding = nn.Conv3d(dim, dim, kernel_size=(ft, fh, fw), stride=(ft, fh, fw))
         
-
-        self.transformers = nn.Sequential(*[Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=self.config.heads(), ff_dim=ff_dim, dropout=dropout_rate, theta=theta) for _ in range(config.depth())])
+        # NOTE: Broke compatibility with num_layers=num_layers//3 -> num_layers=num_layers//config.depth()
+        self.transformers = nn.Sequential(*[Transformer_ST_TDC_gra_sharp(num_layers=num_layers//config.depth(), dim=dim, num_heads=self.config.heads(), ff_dim=ff_dim, dropout=dropout_rate, theta=theta) for _ in range(config.depth())])
         # Transformer
         #self.transformer1 = Transformer_ST_TDC_gra_sharp(num_layers=num_layers//3, dim=dim, num_heads=num_heads, 
         #                               ff_dim=ff_dim, dropout=dropout_rate, theta=theta)
